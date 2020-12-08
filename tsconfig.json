@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "lib": ["ES2016", "DOM"],
+        "outDir": "./dist/",
+        "module": "es6",
+        "target": "es5",
+        "jsx": "react",
+        "declaration": true,
+        "sourceMap": true,
+        "allowJs": true,
+        "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true
+    }
+}

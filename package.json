@@ -1,0 +1,41 @@
+{
+  "name": "sharedb-jsoneditor",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/sharedb-jsoneditor.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/soney/sharedb-json-editor.git"
+  },
+  "types": "dist/src/index.d.ts",
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/soney/sharedb-json-editor/issues"
+  },
+  "homepage": "https://github.com/soney/sharedb-json-editor#readme",
+  "devDependencies": {
+    "@teamwork/websocket-json-stream": "^2.0.0",
+    "@types/events": "^3.0.0",
+    "@types/jsoneditor": "^8.6.0",
+    "@types/sharedb": "^1.0.10",
+    "@types/ws": "^7.4.0",
+    "express": "^4.17.1",
+    "jsoneditor": "^9.1.4",
+    "process": "^0.11.10",
+    "sharedb": "^1.5.2",
+    "ts-loader": "^8.0.11",
+    "typescript": "^4.1.2",
+    "webpack": "^5.10.0",
+    "webpack-cli": "^4.2.0",
+    "ws": "^7.4.1"
+  },
+  "peerDependencies": {
+    "jsoneditor": "^9.1.4",
+    "sharedb": "^1.5.2"
+  },
+  "dependencies": {}
+}
