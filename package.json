@@ -22,6 +22,7 @@
     "@teamwork/websocket-json-stream": "^2.0.0",
     "@types/events": "^3.0.0",
     "@types/jsoneditor": "^8.6.0",
+    "@types/lodash": "^4.14.165",
     "@types/sharedb": "^1.0.10",
     "@types/ws": "^7.4.0",
     "express": "^4.17.1",
@@ -38,5 +39,8 @@
     "jsoneditor": "^9.1.4",
     "sharedb": "^1.5.2"
   },
-  "dependencies": {}
+  "dependencies": {
+    "lodash": "^4.17.20",
+    "lodash.isequal": "^4.5.0"
+  }
 }

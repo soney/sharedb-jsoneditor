@@ -21,12 +21,17 @@ function createDoc(callback) {
                 rootForAll: {
                     visibleRoot: {
                         numClicks: 0,
-                        someArray: [
-                            {w: 1},
-                            {x: 2},
-                            {y: 3},
-                            {z: 4},
-                        ]
+                        someArray: [1,2,3,4,5
+                            // {w: 1},
+                            // {x: 2},
+                            // {y: 3},
+                            // {z: 4},
+                        ],
+                        someObject: {
+                            x: 1,
+                            y: 2,
+                            z: 3
+                        }
                     }
                 }
             }, callback);

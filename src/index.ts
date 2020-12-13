@@ -11,6 +11,7 @@
  */
 
 import * as ShareDB from 'sharedb/lib/client';
+import {filter, flatten, isEqual} from 'lodash';
 import JSONEditor from 'jsoneditor'
 
 export interface ShareDBJSONEditorOptions {
@@ -318,8 +319,37 @@ export default class ShareDBJSONEditorBinding {
                 // parentNode.removeChild(node, true);
             }
 
+            if(op.hasOwnProperty('lm')) {
+                const { lm } = op as ShareDB.ListMoveOp;
+                const node = ShareDBJSONEditorBinding.getNode(fullPath, rootNode);
+
+                const parentNode = node.parent;
+                const currentIndex = p[p.length-1];
+                const newIndex = lm;
+
+                console.log(newIndex, currentIndex);
+                if(newIndex < currentIndex) {
+
+                } else if (newIndex > currentIndex) {
+
+                }
+
+                // if(node) {
+                //     node.updateValue(li);
+                // } else {
+                //     const parentNode = ShareDBJSONEditorBinding.getNode(fullPath.slice(0, fullPath.length - 1), rootNode);
+                //     const node = new parentNode.constructor(parentNode.editor, {
+                //         field: fullPath[fullPath.length-1],
+                //         value: li
+                //     });
+                //     parentNode.appendChild(node, true, true)
+                // }
+                // const parentNode = node.parent;
+                // parentNode.removeChild(node, true);
+            }
+
             if(op.hasOwnProperty('na')) {
-                const { na } = op as ShareDB.AddNumOp;
+                // const { na } = op as ShareDB.AddNumOp;
                 const currentValue = ShareDBJSONEditorBinding.traverseData(doc.data, p);
                 const node = ShareDBJSONEditorBinding.getNode(fullPath, rootNode);
                 if(node) {
@@ -446,12 +476,12 @@ export default class ShareDBJSONEditorBinding {
                 const field = node.field;
                 if(field) {
                     const p = [...shareDBParentPath, field];
-                    const value = ShareDBJSONEditorBinding.traverseData(doc.data, [...shareDBParentPath, field]);
+                    const value = ShareDBJSONEditorBinding.traverseData(doc.data, p);
                     return {p, od: value };
                 } else {
                     const index = node.index;
                     const p = [...shareDBParentPath, index];
-                    const value = ShareDBJSONEditorBinding.traverseData(doc.data, [...shareDBParentPath, index]);
+                    const value = ShareDBJSONEditorBinding.traverseData(doc.data, p);
                     return {p, ld: value };
                 }
             });
@@ -463,8 +493,45 @@ export default class ShareDBJSONEditorBinding {
         // return [];
     }
     private getMoveNodesOp(action: MoveNodesAction, undo: boolean): ShareDB.Op[] {
-        console.log(action);
-        return [];
+        const { oldParentPath, oldParentPathRedo, newParentPath, newParentPathRedo, oldIndex, oldIndexRedo, newIndex, newIndexRedo, fieldNames } = action.params;
+        const prevParentPath = undo ? newParentPath: oldParentPath;
+        const currParentPath = undo ? oldParentPath: newParentPath;
+        const prevIndex = undo ? newIndex: oldIndex;
+        const currIndex = undo ? oldIndex: newIndex;
+
+        if(isEqual(prevParentPath, newParentPath)) { // true move within the same parent
+            const parentShareDBPath = [...this.getPath(), ...ShareDBJSONEditorBinding.getShareDBPath(currParentPath, this.getEditorRootNode())];
+
+            const moveOps: ShareDB.ListMoveOp[] = [];
+            fieldNames.forEach((field) => {
+                if(!field) { // no order for object keys in sharedb
+                    moveOps.push({ p: [...parentShareDBPath, prevIndex], lm: currIndex});
+                }
+            });
+            return moveOps;
+        } else {
+            const opGroups = fieldNames.map((field) => {
+                const doc = this.getDoc();
+                if(field) {
+                    const removeP = [...this.getPath(), ...ShareDBJSONEditorBinding.getShareDBPath(prevParentPath, this.getEditorRootNode()), field];
+                    console.log(removeP);
+                    const value = ShareDBJSONEditorBinding.traverseData(doc.data, removeP);
+                    const addP = [...this.getPath(), ...ShareDBJSONEditorBinding.getShareDBPath(currParentPath, this.getEditorRootNode()), field];
+                    return [{ p: removeP, od: value }, {p: addP, oi: value}];
+                } else {
+                    const removeP = [...this.getPath(), ...ShareDBJSONEditorBinding.getShareDBPath(prevParentPath, this.getEditorRootNode()), prevIndex];
+                    const value = ShareDBJSONEditorBinding.traverseData(doc.data, removeP);
+                    const addP = [...this.getPath(), ...ShareDBJSONEditorBinding.getShareDBPath(currParentPath, this.getEditorRootNode()), currIndex];
+                    const addingTo = ShareDBJSONEditorBinding.traverseData(doc.data, currParentPath);
+                    if(addingTo instanceof Array) {
+                        return [{ p: removeP, ld: value }, {p: addP, li: value}];
+                    } else {
+                        return [{ p: removeP, ld: value }, {p: addP, oi: value}];
+                    }
+                }
+            });
+            return flatten(opGroups as any);
+        }
     }
 
     private getEditorRootNode(): JSONEditorNode {
