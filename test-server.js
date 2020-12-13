@@ -17,7 +17,19 @@ function createDoc(callback) {
         }
 
         if(doc.type === null) {
-            doc.create({numClicks: 0}, callback);
+            doc.create({
+                rootForAll: {
+                    visibleRoot: {
+                        numClicks: 0,
+                        someArray: [
+                            {w: 1},
+                            {x: 2},
+                            {y: 3},
+                            {z: 4},
+                        ]
+                    }
+                }
+            }, callback);
             return;
         }
         callback();

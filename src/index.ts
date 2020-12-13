@@ -20,12 +20,18 @@ export interface ShareDBJSONEditorOptions {
 }
 
 interface JSONEditorNode {
+    index: number;
     fieldEditable: boolean;
     field: string|undefined;
     childs?: JSONEditorNode[];
     editor: JSONEditor;
     parent: JSONEditorNode|null;
     updateValue: Function;
+    removeChild: (child: JSONEditorNode, updateDom: boolean) => void;
+    appendChild: (child: JSONEditorNode, visible: boolean, updateDom: boolean) => void;
+    getValue: () => any;
+    constructor: any;
+    // (editor: any, params: any) => JSONEditorNode;
 }
 
 type ActionPath = number[];
@@ -121,11 +127,9 @@ interface EditFieldAction extends HistoryAction {
     action: 'editField',
     params: {
         index: number,
-        paths: ActionPath[],
         parentPath: ActionPath,
         oldSelection: Selection,
         newSelection: Selection,
-        nodes: JSONEditorNode[],
         newValue: any,
         oldValue: any
     }
@@ -212,6 +216,7 @@ export default class ShareDBJSONEditorBinding {
             this.suppress = true;
             editor.set(this.navigate(doc.data, this.getPath()));
             this.suppress = false;
+            editor.expandAll() // TODO: remove
         }
     }
 
@@ -260,24 +265,68 @@ export default class ShareDBJSONEditorBinding {
         if(this.suppress) { return; }
 
         const doc = this.getDoc();
-        const newValue = this.navigate(doc.data, this.getPath());
-        const editor = this.getEditor();
-        const rootNode = (editor as any).node as JSONEditorNode;
+        const rootNode = this.getEditorRootNode();
 
         ops.forEach((op) => {
+            console.log(op);
             const { p } = op;
-            const fullPath = [...this.getPath(), ...p];
+            const fullPath = ShareDBJSONEditorBinding.removePrefix(this.getPath(), p);
+
+            if(op.hasOwnProperty('od')) {
+                // const { od } = op as ShareDB.ObjectDeleteOp;
+                const node = ShareDBJSONEditorBinding.getNode(fullPath, rootNode);
+                const parentNode = node.parent;
+                parentNode.removeChild(node, true);
+            }
+
             if(op.hasOwnProperty('oi')) {
                 const { oi } = op as ShareDB.ObjectInsertOp;
                 const node = ShareDBJSONEditorBinding.getNode(fullPath, rootNode);
-                // const nodeEditor = node.editor;
-                // nodeEditor.set(oi);
-                // console.log(node)
-                node.updateValue(oi);
+                if(node) {
+                    node.updateValue(oi);
+                } else {
+                    const parentNode = ShareDBJSONEditorBinding.getNode(fullPath.slice(0, fullPath.length - 1), rootNode);
+                    const node = new parentNode.constructor(parentNode.editor, {
+                        field: fullPath[fullPath.length-1],
+                        value: oi
+                    });
+                    parentNode.appendChild(node, true, true)
+                }
+            }
+
+            if(op.hasOwnProperty('ld')) {
+                // const { ld } = op as ShareDB.ListDeleteOp;
+                const node = ShareDBJSONEditorBinding.getNode(fullPath, rootNode);
+                const parentNode = node.parent;
+                parentNode.removeChild(node, true);
+            }
+
+            if(op.hasOwnProperty('li')) {
+                const { li } = op as ShareDB.ListInsertOp;
+                const node = ShareDBJSONEditorBinding.getNode(fullPath, rootNode);
+                if(node) {
+                    node.updateValue(li);
+                } else {
+                    const parentNode = ShareDBJSONEditorBinding.getNode(fullPath.slice(0, fullPath.length - 1), rootNode);
+                    const node = new parentNode.constructor(parentNode.editor, {
+                        field: fullPath[fullPath.length-1],
+                        value: li
+                    });
+                    parentNode.appendChild(node, true, true)
+                }
+                // const parentNode = node.parent;
+                // parentNode.removeChild(node, true);
+            }
+
+            if(op.hasOwnProperty('na')) {
+                const { na } = op as ShareDB.AddNumOp;
+                const currentValue = ShareDBJSONEditorBinding.traverseData(doc.data, p);
+                const node = ShareDBJSONEditorBinding.getNode(fullPath, rootNode);
+                if(node) {
+                    node.updateValue(currentValue);
+                }
             }
         });
-
-        // editor.set(newValue);
     };
 
     private static getNode(path: (string|number)[], node: JSONEditorNode): JSONEditorNode|null {
@@ -288,7 +337,7 @@ export default class ShareDBJSONEditorBinding {
             const childNodes = node.childs;
             for(let i: number = 0; i<childNodes.length; i++) {
                 const childNode = childNodes[i];
-                if(childNode.field === currentPathItem) {
+                if(childNode.field === currentPathItem || childNode.index === currentPathItem) {
                     return this.getNode(path.slice(1), childNode);
                 }
             }
@@ -301,9 +350,21 @@ export default class ShareDBJSONEditorBinding {
         let node = rootNode;
         jsonEditorPath.forEach((idx) => {
             node = node.childs[idx];
-            shareDBPath.push(node.field);
+            if(node.field) {
+                shareDBPath.push(node.field);
+            } else {
+                shareDBPath.push(node.index);
+            }
         });
         return shareDBPath;
+    }
+    
+    private static traverseData(data: any, path: ShareDB.Path): any {
+        let result: any = data;
+        for(let i: number = 0; i<path.length; i++) {
+            result = result[path[i]];
+        }
+        return result;
     }
 
     private $onLocalChange = (newValue: any) => {
@@ -314,49 +375,103 @@ export default class ShareDBJSONEditorBinding {
         }
         const newHistoryIndex = this.history.index;
         const doc = this.getDoc();
-        if(newHistoryIndex === this.previousHistoryIndex+1) {
+        const movingForward = newHistoryIndex === this.previousHistoryIndex+1;
+        const movingBackward = newHistoryIndex === this.previousHistoryIndex-1;
+        this.previousHistoryIndex = newHistoryIndex;
+
+        if(movingForward || movingBackward) {
             const actions = this.history.history;
-            const last = actions[actions.length - 1];
-            const {action} = last;
+            const currentAction = actions[movingBackward ? newHistoryIndex+1 : newHistoryIndex];
+            const {action} = currentAction;
 
             if(action === 'editValue') {
-                const lastAction = last as EditHistoryAction;
-                const {path, newValue} = lastAction.params;
-                const editor = this.getEditor();
-                const rootNode = (editor as any).node as JSONEditorNode;
-                const shareDBPath = [...this.getPath(), ...ShareDBJSONEditorBinding.getShareDBPath(path, rootNode)];
-
-                doc.submitOp([{p: shareDBPath, oi: newValue }]);
-            } else if(action === 'removeNodes') {
-                const lastAction = last as RemoveNodesAction;
-                const {paths, index} = lastAction.params;
-
-                const editor = this.getEditor();
-                const rootNode = (editor as any).node as JSONEditorNode;
-                const shareDBPaths = paths.map((path) => [...this.getPath(), ...ShareDBJSONEditorBinding.getShareDBPath(path, rootNode)]);
-
-                // const ops = doc.submitOp(shareDBPaths.map((path) => [{
-                //     p: path, od: 
-                // }]));
-                console.log(lastAction)
-            } else if(action === 'appendNodes') {
-                const lastAction = last as AppendNodesAction;
-                const {paths} = lastAction.params;
-                console.log(lastAction)
+                const ops = this.getEditActionOp(currentAction as EditHistoryAction, movingBackward);
+                doc.submitOp(ops);
             } else if(action === 'editField') {
-                const lastAction = last as EditFieldAction;
-                const {paths} = lastAction.params;
-                console.log(lastAction)
+                const ops = this.getEditFieldOp(currentAction as EditFieldAction, movingBackward);
+                doc.submitOp(ops);
+            } else if(action === 'removeNodes') {
+                const ops = this.getRemoveNodeOp(currentAction as RemoveNodesAction, movingBackward);
+                doc.submitOp(ops);
+            } else if(action === 'moveNodes') {
+                const ops = this.getMoveNodesOp(currentAction as MoveNodesAction, movingBackward);
+                doc.submitOp(ops);
             } else {
-                console.log(last);
                 doc.submitOp([{p: [...this.getPath()], oi: newValue }]);
             }
-
-            this.previousHistoryIndex = newHistoryIndex;
         } else {
             doc.submitOp([{p: [...this.getPath()], oi: newValue }]);
         }
 
         this.suppress = false;
     };
+    private getEditFieldOp(action: EditFieldAction, undo: boolean): ShareDB.Op[] {
+        const {parentPath, oldValue, newValue} = action.params;
+        const currentValue = undo ? oldValue : newValue;
+        const previousValue = undo ? newValue : oldValue;
+        const shareDBParentPath = [...this.getPath(), ...ShareDBJSONEditorBinding.getShareDBPath(parentPath, this.getEditorRootNode())];
+        const doc = this.getDoc();
+        const obj = ShareDBJSONEditorBinding.traverseData(doc.data, [...shareDBParentPath, previousValue]);
+        return [
+            {p: [...shareDBParentPath, previousValue], od: obj },
+            {p: [...shareDBParentPath, currentValue], oi: obj}
+        ];
+    }
+    private getEditActionOp(action: EditHistoryAction, undo: boolean): ShareDB.Op[] {
+        const {path, newValue, oldValue} = action.params;
+        const currentValue = undo ? oldValue : newValue;
+        const shareDBPath = [...this.getPath(), ...ShareDBJSONEditorBinding.getShareDBPath(path, this.getEditorRootNode())];
+        return [ {p: shareDBPath, oi: currentValue } ];
+    }
+    private getRemoveNodeOp(action: RemoveNodesAction, undo: boolean): ShareDB.Op[] {
+        const {index, nodes, parentPath, paths} = action.params;
+        const shareDBParentPath = [...this.getPath(), ...ShareDBJSONEditorBinding.getShareDBPath(parentPath, this.getEditorRootNode())];
+
+        if(undo) {
+            return nodes.map((node) => {
+                const field = node.field;
+                const value = node.getValue();
+                if(field) {
+                    const p = [...shareDBParentPath, field];
+                    return {p, oi: value };
+                } else {
+                    const index = node.index;
+                    const p = [...shareDBParentPath, index];
+                    return {p, li: value };
+                }
+            });
+        } else {
+            const doc = this.getDoc();
+            return nodes.map((node) => {
+                const field = node.field;
+                if(field) {
+                    const p = [...shareDBParentPath, field];
+                    const value = ShareDBJSONEditorBinding.traverseData(doc.data, [...shareDBParentPath, field]);
+                    return {p, od: value };
+                } else {
+                    const index = node.index;
+                    const p = [...shareDBParentPath, index];
+                    const value = ShareDBJSONEditorBinding.traverseData(doc.data, [...shareDBParentPath, index]);
+                    return {p, ld: value };
+                }
+            });
+        }
+        // const shareDBPaths = paths.map((path) => [...this.getPath(), ...ShareDBJSONEditorBinding.getShareDBPath(path, this.getEditorRootNode())]);
+        // console.log(index, nodes, parentPath, paths);
+        // console.log(shareDBParentPath);
+        // console.log(nodes);
+        // return [];
+    }
+    private getMoveNodesOp(action: MoveNodesAction, undo: boolean): ShareDB.Op[] {
+        console.log(action);
+        return [];
+    }
+
+    private getEditorRootNode(): JSONEditorNode {
+        return (this.getEditor() as any).node as JSONEditorNode;
+    }
+
+    private static removePrefix(prefix: ShareDB.Path, path: ShareDB.Path) {
+        return path.slice(prefix.length);
+    }
 }

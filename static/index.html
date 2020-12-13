@@ -19,7 +19,7 @@
     // Create local Doc instance mapped to 'examples' collection document with id 'counter'
     var doc = connection.get('examples', 'counter');
 
-    const binding = new ShareDBJSONEditorBinding({ editor, doc });
+    const binding = new ShareDBJSONEditorBinding({ editor, doc, path: ['rootForAll'] });
 
     setInterval(() => {
         // doc.submitOp({p: ['numClicks'], na: 1});
