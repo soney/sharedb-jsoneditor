@@ -2,24 +2,31 @@
 <meta charset="utf-8">
 <link href="/node_modules/jsoneditor/dist/jsoneditor.css" rel="stylesheet" type="text/css">
 
-<div id="jsoneditor" style="width: 400px; height: 400px;"></div>
+<table>
+    <tr>
+        <td>
+            <div id="jsoneditor" style="width: 400px; height: 400px;"></div>
+        </td>
+        <td>
+            <div id="jsoneditor2" style="width: 400px; height: 400px;"></div>
+        </td>
+    </tr>
+</table>
 
 <script src="sharedb.js"></script>
 <script src="/node_modules/jsoneditor/dist/jsoneditor.js"></script>
 <script src="/dist/sharedb-jsoneditor.js"></script>
 <script type="text/javascript">
-    const container = document.getElementById("jsoneditor")
-    const options = {}
-    const editor = new JSONEditor(container, options);
-
     // Open WebSocket connection to ShareDB server
     var socket = new WebSocket('ws://' + window.location.host);
     var connection = new ShareDB.Connection(socket);
 
     // Create local Doc instance mapped to 'examples' collection document with id 'counter'
     var doc = connection.get('examples', 'counter');
+    var doc2 = connection.get('examples', 'counter');
 
-    const binding = new ShareDBJSONEditorBinding({ editor, doc, path: ['rootForAll'] });
+    const editor1 = new ShareDBJSONEditor(doc, document.getElementById('jsoneditor'), []);
+    const editor2 = new ShareDBJSONEditor(doc2, document.getElementById('jsoneditor2'), []);
 
     setInterval(() => {
         // doc.submitOp({p: ['numClicks'], na: 1});
