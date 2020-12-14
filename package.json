@@ -36,10 +36,10 @@
     "ws": "^7.4.1"
   },
   "peerDependencies": {
-    "jsoneditor": "^9.1.4",
     "sharedb": "^1.5.2"
   },
   "dependencies": {
+    "jsoneditor": "^9.1.4",
     "lodash": "^4.17.20",
     "lodash.isequal": "^4.5.0"
   }
