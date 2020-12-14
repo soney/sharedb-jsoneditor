@@ -1,10 +1,12 @@
 {
   "name": "sharedb-jsoneditor",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "main": "dist/sharedb-jsoneditor.js",
   "scripts": {
     "build": "npx webpack",
+    "run": "npx webpack --watch",
+    "prepublish": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -12,12 +14,13 @@
     "url": "git+https://github.com/soney/sharedb-json-editor.git"
   },
   "types": "dist/src/index.d.ts",
-  "author": "",
+  "author": "Steve Oney",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/soney/sharedb-json-editor/issues"
   },
   "homepage": "https://github.com/soney/sharedb-json-editor#readme",
+  "files": ["dist"],
   "devDependencies": {
     "@teamwork/websocket-json-stream": "^2.0.0",
     "@types/events": "^3.0.0",
@@ -40,7 +43,6 @@
   },
   "dependencies": {
     "jsoneditor": "^9.1.4",
-    "lodash": "^4.17.20",
-    "lodash.isequal": "^4.5.0"
+    "lodash": "^4.17.20"
   }
 }
