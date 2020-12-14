@@ -17,9 +17,9 @@ module.exports = {
         filename: 'sharedb-jsoneditor.js',
         path: path.resolve(__dirname, 'dist'),
         libraryExport: 'default',
-        library: 'ShareDBJSONEditorBinding'
+        library: 'ShareDBJSONEditor'
     },
     externals: {
-        'jsoneditor': 'JSONEditor'
+        // 'jsoneditor': 'JSONEditor'
     }
 };
