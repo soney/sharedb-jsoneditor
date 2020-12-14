@@ -4,7 +4,7 @@ Warning: this library is *very* hacky and preliminary. You should *not* depend o
 
 ![Image of two synchronized JSONEditor instances](https://github.com/soney/sharedb-jsoneditor/raw/main/resources/sample_interaction.gif)
 
-This library provides a forntend for visualizing ShareDB documents using [JSONEditor](https://github.com/josdejong/jsoneditor).
+This library provides a frontend for visualizing ShareDB documents using [JSONEditor](https://github.com/josdejong/jsoneditor).
 
 Installing:
 ```bash
