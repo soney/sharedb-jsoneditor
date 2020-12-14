@@ -1,6 +1,6 @@
 {
   "name": "sharedb-jsoneditor",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "",
   "main": "dist/sharedb-jsoneditor.js",
   "scripts": {
