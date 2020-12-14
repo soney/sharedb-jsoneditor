@@ -107,6 +107,6 @@ typings/
 src/
 resources/
 static/
-webpack.config.json
+webpack.config.js
 tsconfig.json
 test-server.js
