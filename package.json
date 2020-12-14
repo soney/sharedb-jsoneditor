@@ -1,6 +1,6 @@
 {
   "name": "sharedb-jsoneditor",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "",
   "main": "dist/sharedb-jsoneditor.js",
   "scripts": {
@@ -20,7 +20,6 @@
     "url": "https://github.com/soney/sharedb-json-editor/issues"
   },
   "homepage": "https://github.com/soney/sharedb-json-editor#readme",
-  "files": ["dist/**/*"],
   "devDependencies": {
     "@teamwork/websocket-json-stream": "^2.0.0",
     "@types/events": "^3.0.0",
