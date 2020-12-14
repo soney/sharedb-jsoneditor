@@ -1,6 +1,7 @@
 
 import * as ShareDB from 'sharedb/lib/client';
-import {flatten, isEqual} from 'lodash';
+import flatten from 'lodash/flatten';
+import isEqual from 'lodash/isEqual';
 import JSONEditor from 'jsoneditor'
 
 export interface ShareDBJSONEditorOptions {

@@ -13,7 +13,7 @@
 import { ShareDBJSONEditorBinding } from './sharedb-jsoneditor-binding';
 import * as ShareDB from 'sharedb/lib/client';
 import JSONEditor, { JSONEditorOptions } from 'jsoneditor';
-import { extend } from 'lodash';
+import extend from 'lodash/extend';
 
 export default class ShareDBJSONEditor {
     private readonly editor: JSONEditor;
